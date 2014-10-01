@@ -203,13 +203,13 @@ NSString *const CYRKeyboardButtonKeyPressedKey = @"CYRKeyboardButtonKeyPressedKe
     }
 }
 
-- (void)setTextInput:(id<UITextInput>)textInput
+- (void)setKeyInput:(id<UIKeyInput>)keyInput
 {
-    NSAssert([textInput conformsToProtocol:@protocol(UITextInput)], @"<CYRKeyboardButton> The text input object must conform to the UITextInput protocol!");
+    NSAssert([keyInput conformsToProtocol:@protocol(UIKeyInput)], @"<CYRKeyboardButton> The key input object must conform to the UIKeyInput protocol!");
     
-    [self willChangeValueForKey:NSStringFromSelector(@selector(textInput))];
-    _textInput = textInput;
-    [self didChangeValueForKey:NSStringFromSelector(@selector(textInput))];
+    [self willChangeValueForKey:NSStringFromSelector(@selector(keyInput))];
+    _keyInput = keyInput;
+    [self didChangeValueForKey:NSStringFromSelector(@selector(keyInput))];
 }
 
 #pragma mark - Internal - UI
@@ -288,46 +288,10 @@ NSString *const CYRKeyboardButtonKeyPressedKey = @"CYRKeyboardButtonKeyPressedKe
 
 - (void)insertText:(NSString *)text
 {
-    BOOL shouldInsertText = YES;
+    [self.keyInput insertText:text];
     
-    if ([self.textInput isKindOfClass:[UITextView class]]) {
-        // Call UITextViewDelegate methods if necessary
-        UITextView *textView = (UITextView *)self.textInput;
-        NSRange selectedRange = textView.selectedRange;
-        
-        if ([textView.delegate respondsToSelector:@selector(textView:shouldChangeTextInRange:replacementText:)]) {
-            shouldInsertText = [textView.delegate textView:textView shouldChangeTextInRange:selectedRange replacementText:text];
-        }
-    } else if ([self.textInput isKindOfClass:[UITextField class]]) {
-        // Call UITextFieldDelgate methods if necessary
-        UITextField *textField = (UITextField *)self.textInput;
-        NSRange selectedRange = [self textInputSelectedRange];
-        
-        if ([textField.delegate respondsToSelector:@selector(textField:shouldChangeCharactersInRange:replacementString:)]) {
-            shouldInsertText = [textField.delegate textField:textField shouldChangeCharactersInRange:selectedRange replacementString:text];
-        }
-    }
-    
-    if (shouldInsertText == YES) {
-        [self.textInput insertText:text];
-        
-        [[NSNotificationCenter defaultCenter] postNotificationName:CYRKeyboardButtonPressedNotification object:self
-                                                          userInfo:@{CYRKeyboardButtonKeyPressedKey : text}];
-    }
-}
-
-- (NSRange)textInputSelectedRange
-{
-    UITextPosition *beginning = self.textInput.beginningOfDocument;
-    
-	UITextRange *selectedRange = self.textInput.selectedTextRange;
-	UITextPosition *selectionStart = selectedRange.start;
-	UITextPosition *selectionEnd = selectedRange.end;
-    
-	const NSInteger location = [self.textInput offsetFromPosition:beginning toPosition:selectionStart];
-	const NSInteger length = [self.textInput offsetFromPosition:selectionStart toPosition:selectionEnd];
-    
-	return NSMakeRange(location, length);
+    [[NSNotificationCenter defaultCenter] postNotificationName:CYRKeyboardButtonPressedNotification object:self
+                                                      userInfo:@{CYRKeyboardButtonKeyPressedKey : text}];
 }
 
 #pragma mark - Internal - Configuration
